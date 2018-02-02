@@ -1,6 +1,6 @@
-#include <QTRSensors.h>
+#include <QTRSensors.h> //Bibliothek des QTR-8RC LINE SENSOR
 
-//Motoren
+//Definition der Motoren
 
 #define speedPinA 5
 #define speedPinB 10
@@ -33,29 +33,26 @@ void setup()
 {
   Serial.begin(9600);
   delay(1500);
-  manual_calibration();
-
-  //  calibrate();
-  //set_motors(0,0);
+  manual_calibration(); // hier müsste man mal schauen, wie die automatische Kalibration funktioniert. Jedes Mal manuell zu klaibieren nervt!
 }
 
 void loop()
 {
   unsigned int sensors[5];
-  int position = qtrrc.readLine(sensors);
-  int error = position - 2000;
+  int position = qtrrc.readLine(sensors); // wert von 0 bis 4000
+  int error = position - 2000;            // Anpassung des Wertes, damit die Mitte bei 0 ist
   Serial.println(position);
-  int motorSpeed = KP * error + KD * (error - lastError);
+  int motorSpeed = KP * error + KD * (error - lastError); // Setzen des neuen motorSpeed, evt. müssen die KP- und KD-Regler angepasst werden
   lastError = error;
 
-  int leftMotorSpeed = M1_minumum_speed + motorSpeed;
+  int leftMotorSpeed = M1_minumum_speed + motorSpeed; // Der minimale motorSpeed wird um einen neuen erhöht. In userem Fall ist der minimumSpeed 0. D.h. liest der Sensor eine Null, so bleibt das Fahrzeug stehen. Siehe hierzu das Protokoll vom 27.01.18
   int rightMotorSpeed = M2_minumum_speed - motorSpeed;
   set_motors(leftMotorSpeed, rightMotorSpeed);
 }
 
 void set_motors(int leftMotorSpeed, int rightMotorspeed)
 {
-
+  // Anpassung der Geschwindigkeiten, falls sie einen Maximal- bzw. Minimalwert über(unter)schreiten
   if (leftMotorSpeed > M1_maximum_speed)
     leftMotorSpeed = M1_maximum_speed;
   if (rightMotorspeed > M2_maximum_speed)
@@ -68,12 +65,13 @@ void set_motors(int leftMotorSpeed, int rightMotorspeed)
   analogWrite(speedPinA, leftMotorSpeed);
   Serial.println(leftMotorSpeed);
   analogWrite(speedPinB, rightMotorspeed);
-  digitalWrite(IN1, HIGH); // Vorwärts fahren für RW alle Werte umkehren
+  digitalWrite(IN1, HIGH); // in dieser Position fährt das FTS vorwärts; für RW alle HIGHs und LOWs umkehren;
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
 }
 
+// Diese Funktion wird hoffentlich bald redundant.
 void manual_calibration()
 {
 
