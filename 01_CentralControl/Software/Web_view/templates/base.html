@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block head %}
+        {% include '_head.html' %}
+    {% endblock %}
+  </head>
+
+  <body>
+    {% block navi %}
+        {% include '_navi.html' %}
+    {% endblock %}
+
+    <div class="container-fluid">
+      <div class="row">
+        {% block sidebar %}
+            {% include '_sidebar.html' %}
+        {% endblock %}
+        <div id="frameContent"></div>
+      </div>
+    </div>
+    {% block foot %}
+        {% include '_foot.html' %}
+    {% endblock %}
+  </body>
+</html>
