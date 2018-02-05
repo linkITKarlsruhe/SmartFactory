@@ -3,16 +3,18 @@
 //#include <iostream>
 
 //Function declarations
-void auto_calibration();
+void autoCalibration();
 void set_motors(int leftMotorSpeed, int rightMotorspeed);
+void manualCalibration(const int *manual_calibration_values);
+void showDebug();
 
 // ----------------------- Pin Definitions ---------------------------------- //
-#define speedPinA 5       //pwm pin left motors
-#define speedPinB 10      // pwm pin right motors
-#define IN1 6
-#define IN2 7
-#define IN3 8
-#define IN4 9
+#define speedPinA 3       //pwm pin left motors
+#define speedPinB 8      // pwm pin right motors
+#define IN1 4             // digital pins for motor direction
+#define IN2 5
+#define IN3 6
+#define IN4 7
 
 //QRT-RC8 initialisierung
 #define KP 2                 //experiment to determine this, start by something small that just makes your bot follow the line at a slow speed
@@ -22,15 +24,15 @@ void set_motors(int leftMotorSpeed, int rightMotorspeed);
 #define M1_maximum_speed 255 //max. speed of the Motor1
 #define M2_maximum_speed 255 //max. speed of the Motor2
 //#define MIDDLE_SENSOR 4      //number of middle sensor used
-#define NUM_SENSORS 5        //number of sensors used
+#define NUM_SENSORS 8        //number of sensors used
 #define TIMEOUT 2500         //waits for 2500 us for sensor outputs to go low
-#define EMITTER_PIN 2        //emitterPin is the Arduino digital pin that controls whether the IR LEDs are on or off. Emitter is controlled by digital pin 2
+//#define EMITTER_PIN 2        //emitterPin is the Arduino digital pin that controls whether the IR LEDs are on or off. Emitter is controlled by digital pin 2
 #define DEBUG 0
 
-const int manual_calibration_values[] = {708, 864, 812, 836, 784};
+const int manual_calibration[] = {708, 864, 812, 836, 784};
 
 //sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
-QTRSensorsRC qtrrc((unsigned char[]){A4, A3, A2, A1, A0}, NUM_SENSORS, TIMEOUT, EMITTER_PIN);
+QTRSensorsRC qtrrc((unsigned char[]){A7,A6,A5,A4,A3,A2,A1,A0}, NUM_SENSORS, TIMEOUT);
 
 int lastError = 0;
 int last_proportional = 0;
@@ -39,23 +41,25 @@ int integral = 0;
 void setup()
 {
   Serial.begin(115200);
-  // delay(1500);
-  auto_calibration(); // hier müsste man mal schauen, wie die automatische Kalibration funktioniert. Jedes Mal manuell zu klaibieren nervt!
+  // showDebug();
+  // delay(2000);
+  autoCalibration();
+  // showDebug();
+  // delay(2000);
+  // Serial.println("AutoCalibration Done.");
+  // Serial.println("Loading values from manual calibration before ...");
+  // manualCalibration(manual_calibration);
+  // showDebug();
 
-  // for (int i=0; i < NUM_SENSORS; i++) {
-  //   // qtrrc.calibratedMinimumOn[i] = manual_calibration_values[i];
-  //   // qtrrc.calibratedMaximumOn[i] = 2500;
-  //   Serial.print("calibratedMinimumOn[");Serial.print(calibratedMinimumOn[i]); Serial.println(qtrrc.calibratedMinimumOn[i]);
-  //   cout << "hi";
-  // }
+
 }
 
 void loop()
 {
-  unsigned int sensors[5];
-  int position = qtrrc.readLine(sensors); // wert von 0 bis 4000
-  int error = position - 2000;            // Anpassung des Wertes, damit die Mitte bei 0 ist
-  //Serial.println(position);
+  unsigned int sensors[8];
+  int position = qtrrc.readLine(sensors); // wert von 0 bis 1000*NUM_SENSORS
+  int error = position - (1000*(NUM_SENSORS-1))/2;            // Anpassung des Wertes, damit die Mitte bei 0 ist
+  Serial.println(position);
   int motorSpeed = KP * error + KD * (error - lastError); // Setzen des neuen motorSpeed, evt. müssen die KP- und KD-Regler angepasst werden
   lastError = error;
 
@@ -84,8 +88,14 @@ void set_motors(int leftMotorSpeed, int rightMotorspeed)
   digitalWrite(IN4, HIGH);
 }
 
-// Diese Funktion wird hoffentlich bald redundant.
-void auto_calibration()
+void manualCalibration(const int *fixed_values) {
+  for (int i=0; i < NUM_SENSORS; i++) {
+    qtrrc.calibratedMinimumOn[i] = fixed_values[i];
+    qtrrc.calibratedMaximumOn[i] = 2500;
+  }
+}
+
+void autoCalibration()
 {
 
   int i;
@@ -96,8 +106,9 @@ void auto_calibration()
     delay(20);
   }
 
-  if (DEBUG)
-  {
+}
+
+void showDebug() {
     for (int i = 0; i < NUM_SENSORS; i++)
     {
       Serial.print(qtrrc.calibratedMinimumOn[i]);
@@ -112,5 +123,4 @@ void auto_calibration()
     }
     Serial.println();
     Serial.println();
-  }
 }
