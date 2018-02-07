@@ -2,6 +2,7 @@
 - eeprom save of calibrated values. should be triggered with a button press
 during the first 5 secs of startup. if button is not pressed,
 last calibration values are loaded
+- code refactoring
 */
 
 #include <Arduino.h>
