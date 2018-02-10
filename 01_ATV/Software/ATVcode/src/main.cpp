@@ -10,9 +10,9 @@ last calibration values are loaded
 
 
 //Function declarations
-void autoCalibration();
 void set_motors(int motorspeed_l, int motorspeed_r);
 void manualCalibration(const int *manual_calibration_values);
+void autoCalibration(int duration_cycles, bool enable_motors);
 void showDebug();
 void test_motors();
 
@@ -39,15 +39,18 @@ backward: IN3 HIGH,  IN4 LOW
 const int MAX_BRAKE = 255;          // the higher this pwm value (0-255), the harder the motors max. brake force (= backwards turn) during a curve of the opposite direction
 
 // ----------------------- QTR-8RC Reflectance Sensor Array ------------------------------------- //
-#define NUM_SENSORS 8               // number of reflectance sensors used
+#define NUM_SENSORS 4               // number of reflectance sensors used
 #define TIMEOUT 2500                // waits for 2500 us for sensor outputs to go low
 //#define EMITTER_PIN 2             // emitterPin is the Arduino digital pin that controls whether the IR LEDs are on or off. Emitter is controlled by digital pin 2
 #define DEBUG 0
-QTRSensorsRC Qtrrc((unsigned char[]){A7,A6,A5,A4,A3,A2,A1,A0}, NUM_SENSORS, TIMEOUT);   // instanciate object of class QTRSensorsRC
+QTRSensorsRC Qtrrc((unsigned char[]){A6,A4,A3,A1}, NUM_SENSORS, TIMEOUT);   // instanciate object of class QTRSensorsRC
 // ----------------------- PID Control ---------------------------------------------------------- //
 #define KP 1
 #define KD 5
-const int LAST_CALIBRATION[] = {708, 864, 812, 836, 784};
+int calibration_values[] = {708, 864, 812, 836, 784};
+
+// ----------------------- Push Button ---------------------------------------------------------- //
+#define BUTTON 2
 
 // ----------------------- DO NOT CHANGE -------------------------------------------------------- //
 int last_error = 0;
@@ -57,25 +60,59 @@ int motorSpeed = 0;
 int motorspeed_l;
 int motorspeed_r;
 unsigned int sensors[8];
+int cycles = 125;
+unsigned long last_millis;
+bool calibrated = 0;
 
 
 void setup() {
+  pinMode(BUTTON, INPUT_PULLUP);
   Serial.begin(115200);
-  // showDebug();
-  // delay(2000);
-  autoCalibration();
-  // showDebug();
-  // delay(2000);
+  // autoCalibration(1,0);
   // Serial.println("AutoCalibration Done.");
   // Serial.println("Loading values from manual calibration before ...");
   // manualCalibration(manual_calibration);
   // showDebug();
+
+  // if button is pressed within 5secs
+  last_millis = millis();
+  Serial.print("Last Millis:"); Serial.println(last_millis);
+  while (millis() <= last_millis + 10000L && !calibrated) {
+    if (digitalRead(BUTTON) == LOW) {
+      last_millis = millis();
+      while (millis() <= last_millis + 2000L) {
+        delay(200);
+        if (digitalRead(BUTTON) == LOW) {
+        Serial.println("Starting manual calibration... Please hover the ATV over the line");
+        autoCalibration(125,0);
+        }
+      }
+      Serial.print("calibrated: "); Serial.println(calibrated);
+      if (!calibrated) {
+        Serial.println("Starting autocalibration...");
+        autoCalibration(250,1);
+      }
+    }
+  }
+
+  // if no button was pressed, load previous calibration values from EEPROM
+  // hwReadConfigBlock((void*)&kp, (void*)(1), 4);
+  // hwReadConfigBlock((void*)&ki, (void*)(5), 4);
+  // hwReadConfigBlock((void*)&kd, (void*)(9), 4);
+  // if (!calibrated) {
+  //   autoCalibration(1,0);
+  //   for (int i=0;i<NUM_SENSORS;i++) {
+  //     hwReadConfigBlock((void*)&Qtrrc.calibratedMinimumOn[i], (void*)(1), 4);
+  //     Qtrrc.calibratedMaximumOn[i];
+  //   }
+  // }
+
 }
 
 
 void loop() {
   position = Qtrrc.readLine(sensors); // wert von 0 bis 1000*(NUM_SENSORS-1)
-  Serial.println(error);
+  Serial.println(position);
   error = position - (1000*(NUM_SENSORS-1))/2;            // Anpassung des Wertes, damit die Mitte bei 0 ist
   motorSpeed = KP * error + KD * (error - last_error);
   last_error = error;
@@ -132,7 +169,7 @@ void set_motors(int motorspeed_l, int motorspeed_r) {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     // Serial.print("motorspeed_l unconverted: "); Serial.print(motorspeed_l);
-    motorspeed_l = map(motorspeed_l,-7000,-1000,0,MAX_BRAKE);
+    motorspeed_l = map(motorspeed_l,-(NUM_SENSORS-1),-1000,0,MAX_BRAKE);
     // Serial.print(" / converted:"); Serial.println(motorspeed_l);
     // Serial.print("Brake L: "); Serial.println(motorspeed_l);
   } else {
@@ -141,7 +178,7 @@ void set_motors(int motorspeed_l, int motorspeed_r) {
   }
 
   if (motorspeed_r < -1000) {
-    motorspeed_r = map(motorspeed_r,-7000,-1000,0,MAX_BRAKE);
+    motorspeed_r = map(motorspeed_r,-(NUM_SENSORS-1),-1000,0,MAX_BRAKE);
     // Serial.print("Brake R: "); Serial.println(motorspeed_r);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
@@ -161,12 +198,22 @@ void manualCalibration(const int *fixed_values) {
   }
 }
 
-void autoCalibration() {
-  int i;
-  for (i = 0; i < 125; i++) {
+void autoCalibration(int duration_cycles, bool enable_motors) {
+  if (enable_motors) {
+    // left side fwd
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    // right side bwd
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+    analogWrite(PWM_LEFT, 125);
+    analogWrite(PWM_RIGHT, 125);
+  }
+  for (int i = 0; i < duration_cycles; i++) {
     Qtrrc.calibrate(QTR_EMITTERS_ON);
     delay(20);
   }
+  calibrated = 1;
 }
 
 void showDebug() {
