@@ -6,6 +6,7 @@ last calibration values are loaded
 */
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <QTRSensors.h>
 
 
@@ -99,13 +100,15 @@ void setup() {
   // hwReadConfigBlock((void*)&kp, (void*)(1), 4);
   // hwReadConfigBlock((void*)&ki, (void*)(5), 4);
   // hwReadConfigBlock((void*)&kd, (void*)(9), 4);
-  // if (!calibrated) {
-  //   autoCalibration(1,0);
-  //   for (int i=0;i<NUM_SENSORS;i++) {
-  //     hwReadConfigBlock((void*)&Qtrrc.calibratedMinimumOn[i], (void*)(1), 4);
-  //     Qtrrc.calibratedMaximumOn[i];
-  //   }
-  // }
+  if (!calibrated) {
+    autoCalibration(1,0); //benoetigt??
+    for (int i=0;i<NUM_SENSORS;i++) {
+      int sensor_i;
+      hwReadConfigBlock((void*)&sensor_i, (void*)(1), 4);
+      Qtrrc.calibratedMinimumOn[i] = sensor_i;
+      Qtrrc.calibratedMaximumOn[i];
+    }
+  }
 
 }
 
@@ -229,4 +232,28 @@ void showDebug() {
     }
     Serial.println();
     Serial.println();
+}
+
+void EEPROMWritelong(int address, int value)
+{
+  //Decomposition from a int to 2 bytes by using bitshift.
+  //One = Most significant -> two = Least significant byte
+  byte two = (value & 0xFF);
+  byte one = ((value >> 8) & 0xFF);
+
+  //Write the 2 bytes into the eeprom memory.
+  EEPROM.write(address, two);
+  EEPROM.write(address + 1, one);
+}
+
+long EEPROMReadlong(long address)
+{
+  //Read the 4 bytes from the eeprom memory.
+  long four = EEPROM.read(address);
+  long three = EEPROM.read(address + 1);
+  long two = EEPROM.read(address + 2);
+  long one = EEPROM.read(address + 3);
+
+  //Return the recomposed long by using bitshift.
+  return ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
 }
