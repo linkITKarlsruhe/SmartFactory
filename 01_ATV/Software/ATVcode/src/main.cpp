@@ -12,10 +12,12 @@ last calibration values are loaded
 
 //Function declarations
 void set_motors(int motorspeed_l, int motorspeed_r);
-void manualCalibration(const int *manual_calibration_values);
 void autoCalibration(int duration_cycles, bool enable_motors);
 void showDebug();
 void test_motors();
+int eepromRead(int address);
+void eepromWrite(int address, int value);
+void initializeCalibrationArrays();
 
 // ----------------------- L298N Motor Driver Pin Definitions ---------------------------------- //
 #define PWM_LEFT 3                // pwm pin left motors
@@ -60,6 +62,7 @@ int error = 0;
 int motorSpeed = 0;
 int motorspeed_l;
 int motorspeed_r;
+int address = 0;
 unsigned int sensors[8];
 int cycles = 125;
 unsigned long last_millis;
@@ -97,16 +100,13 @@ void setup() {
   }
 
   // if no button was pressed, load previous calibration values from EEPROM
-  // hwReadConfigBlock((void*)&kp, (void*)(1), 4);
-  // hwReadConfigBlock((void*)&ki, (void*)(5), 4);
-  // hwReadConfigBlock((void*)&kd, (void*)(9), 4);
   if (!calibrated) {
-    autoCalibration(1,0); //benoetigt??
+    initializeCalibrationArrays();    // IMPORTANT! Otherwise Qtrrc.calibratedMinimumOn[i] / Qtrrc.calibratedMaximumOn[i] will not be initialized
     for (int i=0;i<NUM_SENSORS;i++) {
-      int sensor_i;
-      hwReadConfigBlock((void*)&sensor_i, (void*)(1), 4);
-      Qtrrc.calibratedMinimumOn[i] = sensor_i;
-      Qtrrc.calibratedMaximumOn[i];
+      Qtrrc.calibratedMinimumOn[i] = eepromRead(4*i);
+      Qtrrc.calibratedMaximumOn[i] = eepromRead((4*i)+2);
+      Serial.print("Loaded from EEPROM: Qtrrc.calibratedMinimum/Maximum: "); Serial.print(Qtrrc.calibratedMinimumOn[i]); Serial.print(" / ");Serial.println(Qtrrc.calibratedMaximumOn[i]);
+      Serial.println("----------");
     }
   }
 
@@ -115,7 +115,7 @@ void setup() {
 
 void loop() {
   position = Qtrrc.readLine(sensors); // wert von 0 bis 1000*(NUM_SENSORS-1)
-  Serial.println(position);
+  //Serial.println(position);
   error = position - (1000*(NUM_SENSORS-1))/2;            // Anpassung des Wertes, damit die Mitte bei 0 ist
   motorSpeed = KP * error + KD * (error - last_error);
   last_error = error;
@@ -194,13 +194,6 @@ void set_motors(int motorspeed_l, int motorspeed_r) {
   analogWrite(PWM_RIGHT, motorspeed_r);
 }
 
-void manualCalibration(const int *fixed_values) {
-  for (int i=0; i < NUM_SENSORS; i++) {
-    Qtrrc.calibratedMinimumOn[i] = fixed_values[i];
-    Qtrrc.calibratedMaximumOn[i] = 2500;
-  }
-}
-
 void autoCalibration(int duration_cycles, bool enable_motors) {
   if (enable_motors) {
     // left side fwd
@@ -215,6 +208,13 @@ void autoCalibration(int duration_cycles, bool enable_motors) {
   for (int i = 0; i < duration_cycles; i++) {
     Qtrrc.calibrate(QTR_EMITTERS_ON);
     delay(20);
+  }
+  // Store calibration values in EEPROM
+  for (int i=0; i < NUM_SENSORS; i++) {
+    eepromWrite(4*i, Qtrrc.calibratedMinimumOn[i]);
+    eepromWrite((4*i)+2, Qtrrc.calibratedMaximumOn[i]);
+    Serial.print("Written Qtrrc.calibratedMinimum/Maximum: "); Serial.print(Qtrrc.calibratedMinimumOn[i]); Serial.print(" / ");Serial.println(Qtrrc.calibratedMaximumOn[i]);
+    Serial.println("////////");
   }
   calibrated = 1;
 }
@@ -234,7 +234,7 @@ void showDebug() {
     Serial.println();
 }
 
-void EEPROMWritelong(int address, int value)
+void eepromWrite(int addr, int value)
 {
   //Decomposition from a int to 2 bytes by using bitshift.
   //One = Most significant -> two = Least significant byte
@@ -242,18 +242,20 @@ void EEPROMWritelong(int address, int value)
   byte one = ((value >> 8) & 0xFF);
 
   //Write the 2 bytes into the eeprom memory.
-  EEPROM.write(address, two);
-  EEPROM.write(address + 1, one);
+  EEPROM.write(addr, two);
+  EEPROM.write(addr + 1, one);
 }
 
-long EEPROMReadlong(long address)
+int eepromRead(int addr)
 {
   //Read the 4 bytes from the eeprom memory.
-  long four = EEPROM.read(address);
-  long three = EEPROM.read(address + 1);
-  long two = EEPROM.read(address + 2);
-  long one = EEPROM.read(address + 3);
+  int two = EEPROM.read(addr);
+  int one = EEPROM.read(addr + 1);
 
   //Return the recomposed long by using bitshift.
-  return ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
+  return ((two << 0) & 0xFF) + ((one << 8) & 0xFFFF);
+}
+
+void initializeCalibrationArrays() {
+  Qtrrc.calibrate(QTR_EMITTERS_ON);
 }
