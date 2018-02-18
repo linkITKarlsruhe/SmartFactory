@@ -1,4 +1,4 @@
-# Contains files for the robot arm.
+# Thor Robot Arm
 
 ## Useful links:
 - Project Page	 			- https://hackaday.io/project/12989-thor
