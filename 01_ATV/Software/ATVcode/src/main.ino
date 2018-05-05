@@ -5,7 +5,6 @@ last calibration values are loaded
 - code refactoring
 */
 
-
 #include <Arduino.h>
 #include <EEPROM.h>     // lib for memory for saving calibration
 #include <QTRSensors.h> // lib of line following sensors
@@ -15,10 +14,9 @@ void set_motors(int motorspeed_l, int motorspeed_r);
 void autoCalibration(int duration_cycles, bool enable_motors);
 void showDebug();
 void test_motors();
-int eepromRead(int address); //FIXME: do we need an input
+int eepromRead(int address);
 void eepromWrite(int address, int value);
 void initializeCalibrationArrays();
-
 // ----------------------- L298N Motor Driver Pin Definitions ---------------------------------- //
 #define PWM_LEFT 3  // pwm pin left motors
 #define PWM_RIGHT 8 // pwm pin right motors
@@ -42,19 +40,25 @@ backward: IN3 HIGH,  IN4 LOW
 const int MAX_BRAKE = 255; // the higher this pwm value (0-255), the harder the motors max. brake force (= backwards turn) during a curve of the opposite direction
 
 // ----------------------- QTR-8RC Reflectance Sensor Array ------------------------------------- //
-#define NUM_SENSORS 4 // number of reflectance sensors used
+#define NUM_SENSORS 8 // number of reflectance sensors used
 #define TIMEOUT 2500  // waits for 2500 us for sensor outputs to go low
 //#define EMITTER_PIN 2             // emitterPin is the Arduino digital pin that controls whether the IR LEDs are on or off. Emitter is controlled by digital pin 2
 #define DEBUG 0
-QTRSensorsRC Qtrrc((unsigned char[]){A6, A4, A3, A1}, NUM_SENSORS, TIMEOUT); // instantiate object of class QTRSensorsRC
-//TODO: Warum nicht A1 bis A4?
+QTRSensorsRC Qtrrc((unsigned char[]){A7, A6, A5, A4, A3, A2, A1, A0}, NUM_SENSORS, TIMEOUT); // instantiate object of class QTRSensorsRC; sensors nubered from left to right; A1 Sensor num 0
 // ----------------------- PID Control ---------------------------------------------------------- //
 #define KP 1
 #define KD 5
 int calibration_values[] = {708, 864, 812, 836, 784};
 
 // ----------------------- Push Button ---------------------------------------------------------- //
+
 #define BUTTON 2
+
+// ----------------------- Misc ---------------------------------------------------------- //
+
+const long startup_delay = 4000;
+bool fts_go = true;
+bool fts_button_break = false;
 
 // ----------------------- DO NOT CHANGE -------------------------------------------------------- //
 int last_error = 0;
@@ -64,36 +68,37 @@ int motorSpeed = 0;
 int motorspeed_l;
 int motorspeed_r;
 int address = 0;
-unsigned int sensors[8]; //FIXME: ??
+unsigned int sensors[8]; // see QTR Doc .readline
+unsigned int sensors2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int cycles = 125;
 unsigned long last_millis;
 bool calibrated = 0;
 
 void setup()
 {
+  Serial.print("Jetzt kalibrieren");
   pinMode(BUTTON, INPUT_PULLUP);
   Serial.begin(115200);
   // if button is pressed within 5secs this part will calibrate the sensors to the environment
   last_millis = millis(); // Arduino standard function, returns number of milliseconds since board has been turned on
 
-  while (millis() <= last_millis + 10000L && !calibrated)
+  while (millis() <= last_millis + startup_delay && !calibrated)
   {
     if (digitalRead(BUTTON) == LOW)
     {
       last_millis = millis();
 
-      //TODO: Brauchen wir das? ---------------------------------------
       while (millis() <= last_millis + 2000L)
       {
         delay(200);
         if (digitalRead(BUTTON) == LOW)
         {
+          Serial.println("Starting manual calibration...");
           autoCalibration(125, 0); // comp. to doc on autoCalibration
         }
       }
       Serial.print("calibrated: ");
       Serial.println(calibrated);
-      //---------------------------------------------------------------
 
       // Start autoCalibration
       if (!calibrated)
@@ -123,16 +128,52 @@ void setup()
 
 void loop()
 {
-  position = Qtrrc.readLine(sensors); // wert von 0 bis 1000*(NUM_SENSORS-1)
-  //Serial.println(position);
-  error = position - (1000 * (NUM_SENSORS - 1)) / 2; // Anpassung des Wertes, damit die Mitte bei 0 ist
-  motorSpeed = KP * error + KD * (error - last_error);
-  last_error = error;
+  stopFTS();
 
-  motorspeed_l = L_MINSPEED + motorSpeed; // Der minimale motorSpeed wird um einen neuen erhöht. In userem Fall ist der minimumSpeed 0. D.h. liest der Sensor eine Null, so bleibt das Fahrzeug stehen. Siehe hierzu das Protokoll vom 27.01.18
-  motorspeed_r = R_MINSPEED - motorSpeed;
-  set_motors(motorspeed_l, motorspeed_r);
-  //test_motors(); // only needed while debugging
+  if (digitalRead(BUTTON) == LOW)
+  {
+    fts_button_break = !fts_button_break;
+  }
+
+  Qtrrc.readCalibrated(sensors2);
+  // for (int i = 0; i < 8; i++)
+  // {
+  //   Serial.print(i);
+  //   Serial.print("-");
+  //   Serial.print("Sensor: ");
+  //   Serial.print(sensors2[i]);
+  //   Serial.println("");
+  // }
+
+  if (!fts_button_break)
+  {
+
+    if (fts_go == true)
+    {
+      position = Qtrrc.readLine(sensors);                // wert von 0 bis 1000*(NUM_SENSORS-1)
+      error = position - (1000 * (NUM_SENSORS - 1)) / 2; // Anpassung des Wertes, damit die Mitte bei 0 ist
+      motorSpeed = KP * error + KD * (error - last_error);
+      last_error = error;
+
+      motorspeed_l = L_MINSPEED + motorSpeed; // Der minimale motorSpeed wird um einen neuen erhöht. In userem Fall ist der minimumSpeed 0. D.h. liest der Sensor eine Null, so bleibt das Fahrzeug stehen. Siehe hierzu das Protokoll vom 27.01.18
+      motorspeed_r = R_MINSPEED - motorSpeed;
+      set_motors(motorspeed_l, motorspeed_r);
+      //test_motors(); // only needed while debugging
+    }
+    else
+    {
+      set_motors(-1001, -1001);
+      delay(100);
+      set_motors(0, 0);
+      delay(5000);
+      goFTS();
+      getOutOfBlackZone(500);
+    }
+  }
+  else
+  {
+    set_motors(0, 0);
+  }
 }
 
 void set_motors(int motorspeed_l, int motorspeed_r)
@@ -151,17 +192,17 @@ void set_motors(int motorspeed_l, int motorspeed_r)
   {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
-    motorspeed_l = map(motorspeed_l, -(NUM_SENSORS - 1), -1000, 0, MAX_BRAKE);
+    motorspeed_l = map(motorspeed_l, -(NUM_SENSORS - 1), -5000, 0, MAX_BRAKE);
   }
   else
   {
-    digitalWrite(IN1, HIGH);
+    digitalWrite(IN1, HIGH); //TODO: backward/forward
     digitalWrite(IN2, LOW);
   }
 
   if (motorspeed_r < -1000)
   {
-    motorspeed_r = map(motorspeed_r, -(NUM_SENSORS - 1), -1000, 0, MAX_BRAKE);
+    motorspeed_r = map(motorspeed_r, -(NUM_SENSORS - 1), -5000, 0, MAX_BRAKE);
     // Serial.print("Brake R: "); Serial.println(motorspeed_r);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
@@ -174,6 +215,31 @@ void set_motors(int motorspeed_l, int motorspeed_r)
 
   analogWrite(PWM_LEFT, motorspeed_l);
   analogWrite(PWM_RIGHT, motorspeed_r);
+}
+
+void stopFTS()
+{
+  Qtrrc.readCalibrated(sensors2);
+  Serial.println(sensors[0]);
+  if (sensors2[1] >= 900 && sensors2[2] >= 900 && sensors2[3] >= 900 && sensors2[4] >= 900 && sensors2[5] >= 900 && sensors2[6] >= 900 && sensors2[7] >= 900)
+  {
+    Serial.print("Hi");
+    fts_go = false;
+  }
+}
+
+void goFTS()
+{
+  fts_go = true;
+}
+
+void getOutOfBlackZone(int waitTime)
+{
+  last_millis = millis();
+  while (millis() <= last_millis + waitTime)
+  {
+    set_motors(100, 100);
+  }
 }
 
 void autoCalibration(int duration_cycles, bool enable_motors) //this function makes the FTS spin in circles, in that process it will calibrate automatically
@@ -191,8 +257,7 @@ void autoCalibration(int duration_cycles, bool enable_motors) //this function ma
   }
   for (int i = 0; i < duration_cycles; i++)
   {
-    initializeCalibrationArrays()
-    //FIXME: Qtrrc.calibrate(QTR_EMITTERS_ON);
+    initializeCalibrationArrays();
     delay(20);
   }
   // Store calibration values in EEPROM
