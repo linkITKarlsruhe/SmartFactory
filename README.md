@@ -8,4 +8,4 @@ This is a safety feature. Before you can make changes to the files present in th
 **IMPORTANT!!** Your fork does not update automatically. If there are changes in the original (upstream) repo, you have to sync your fork.
 
 ### How to sync my fork?
-https://www.sitepoint.com/quick-tip-synch-a-github-fork-via-the-command-line/
+https://www.sitepoint.com/quick-tip-synch-a-github-fork-via-the-command-line/ (Step 4+5)
