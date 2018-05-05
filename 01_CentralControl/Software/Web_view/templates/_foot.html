@@ -1,0 +1,48 @@
+<footer class="footer">
+  <div class="container">
+    <p class="text-muted">Place sticky footer content here.</p>
+  </div>
+</footer>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="{{ url_for('.static', filename = 'js/jquery.min.js') }}"><\/script>')</script>
+<script src="{{ url_for('.static', filename = 'js/bootstrap.min.js') }}"></script>
+<!-- Table js from Datatables template -->
+<script src="{{ url_for('.static', filename = 'js/jquery.dataTables.min.js') }}"></script>
+<!-- Table js from highcharts template -->
+<script src="{{ url_for('.static', filename = 'js/highcharts.js') }}"></script>
+
+<!--script src="{{ url_for('.static', filename = 'js/smart_factory.js') }}"></script -->
+
+  <script>
+      function load_content(re_page) {
+        $.ajax( {
+            type : "POST",
+            url : re_page,
+            dataType : "json",
+            data : "",
+            error: function(XMLResponse) {
+                alert(XMLResponse.responseText )
+            },
+            success : function(data) {
+                $( "#frameContent" ).html(data);
+                $('#first_page').dataTable();
+            }
+        });
+        return false;
+    };
+      $(document).ready(function() {
+          $('li').click( function() {
+              $('.active').removeClass('active')
+              $(this).addClass('active')
+              load_content($(this).find('a').text())
+          })
+      });
+  </script>
+
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="{{ url_for('.static', filename = 'js/ie10-viewport-bug-workaround.js') }}"></script>
