@@ -1,5 +1,5 @@
 /**
- * Created by peiren on 21.06.17.
+ * Created by Peiren Yang on 21.06.17.
  */
 
 <!-- Table js from Datatables' template -->
@@ -7,59 +7,27 @@ $(document).ready(function() {
     $('#first_page').dataTable();
 } );
 
-$(function(){
-    $('#indexMenu li').click(function(){
-        var current = $(this),
-        target = current.find('a').attr('target');
-        $.get(target,function(data){
-            $("#frameContent").html(data);
-         });
-    });
+function load_content(re_page) {
+$.ajax( {
+    type : "POST",
+    url : re_page,
+    dataType : "json",
+    data : "",
+    error: function(XMLResponse) {
+        //alert(XMLResponse.responseText
+        $('#frameContent').html(XMLResponse.responseText)
+    },
+    success : function(data) {
+        $('#frameContent').html(data);
+        $('#first_page').dataTable();
+    }
 });
-<!-- Table js from Datatables' template -->
-function ajax_test() {
-    $.ajax( {
-        type : "POST",
-        url : "/",
-        dataType : "json",
-        data : "",
-        error: function(XMLResponse) {
-            alert(XMLResponse.responseText )
-        },
-        success : function(data) {
-            $( "#hh1" ).text(data);
-        }
-    } );
-    return false;
+return false;
 };
-
-function load_content() {
-    $.ajax( {
-        type : "POST",
-        url : "/table",
-        dataType : "json",
-        data : "",
-        error: function(XMLResponse) {
-            alert(XMLResponse.responseText )
-        },
-        success : function(data) {
-            $( "#frameContent" ).text(data);
-        }
-    } );
-    return false;
-};
-
-<!-- Table js from Datatables' template
-$(function(){
-    $.get("index.html",function(data){
-        $("#frameContent").html(data);
-    });
-
-    $('#indexMenu li').click(function(){
-        var current = $(this),
-        target = current.find('a').attr('target');
-        $.get(target,function(data){
-            $("#frameContent").text(data);
-         });
-    });
-});-->
+$(document).ready(function() {
+  $('li').click( function() {
+      $('.active').removeClass('active')
+      $(this).addClass('active')
+      load_content($(this).find('a').text())
+  })
+});
