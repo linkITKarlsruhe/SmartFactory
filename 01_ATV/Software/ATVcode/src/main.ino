@@ -17,9 +17,12 @@ void test_motors();
 int eepromRead(int address);
 void eepromWrite(int address, int value);
 void initializeCalibrationArrays();
+
 // ----------------------- L298N Motor Driver Pin Definitions ---------------------------------- //
+
 #define PWM_LEFT 3  // pwm pin left motors
 #define PWM_RIGHT 8 // pwm pin right motors
+
 /* left side motor pins.
 forward:  IN1 HIGH, IN2 LOW
 backward: IN1 LOW,  IN2 HIGH
@@ -35,17 +38,22 @@ backward: IN3 HIGH,  IN4 LOW
 
 #define L_MINSPEED 0       // minimum pwm value of the left motors
 #define R_MINSPEED 0       // minimum pwm value of the right motors
-#define L_MAXSPEED 255     // max. pwm value of the left motors
+#define L_MAXSPEED 255     // max. pwm value of the left motors // initialized again as a not constant value
 #define R_MAXSPEED 255     // max. pwm value of the right motors
+#define L_DECELERATED 100
+#define R_DECELERATED 100
 const int MAX_BRAKE = 255; // the higher this pwm value (0-255), the harder the motors max. brake force (= backwards turn) during a curve of the opposite direction
 
 // ----------------------- QTR-8RC Reflectance Sensor Array ------------------------------------- //
+
 #define NUM_SENSORS 8 // number of reflectance sensors used
 #define TIMEOUT 2500  // waits for 2500 us for sensor outputs to go low
 //#define EMITTER_PIN 2             // emitterPin is the Arduino digital pin that controls whether the IR LEDs are on or off. Emitter is controlled by digital pin 2
 #define DEBUG 0
 QTRSensorsRC Qtrrc((unsigned char[]){A7, A6, A5, A4, A3, A2, A1, A0}, NUM_SENSORS, TIMEOUT); // instantiate object of class QTRSensorsRC; sensors nubered from left to right; A1 Sensor num 0
+
 // ----------------------- PID Control ---------------------------------------------------------- //
+
 #define KP 1
 #define KD 5
 int calibration_values[] = {708, 864, 812, 836, 784};
@@ -57,10 +65,15 @@ int calibration_values[] = {708, 864, 812, 836, 784};
 // ----------------------- Misc ---------------------------------------------------------- //
 
 const long startup_delay = 4000;
+const long getOutOfBlackZoneTime = 500;
+const long waitAtBlackBarTime = 5000;
+int  l_maxspeed = L_MAXSPEED;
+int  r_maxspeed = R_MAXSPEED;
 bool fts_go = true;
 bool fts_button_break = false;
 
 // ----------------------- DO NOT CHANGE -------------------------------------------------------- //
+
 int last_error = 0;
 int position = 0;
 int error = 0;
@@ -69,10 +82,12 @@ int motorspeed_l;
 int motorspeed_r;
 int address = 0;
 unsigned int sensors[8]; // see QTR Doc .readline
-unsigned int sensors2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+unsigned int blackBarSnsrs[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // probably not really necessary, used for finding black markings on the underground
 int cycles = 125;
 unsigned long last_millis;
 bool calibrated = 0;
+
+// ----------------------- Setup -------------------------------------------------------- //
 
 void setup()
 {
@@ -126,24 +141,20 @@ void setup()
   }
 }
 
+// ----------------------- Loop -------------------------------------------------------- //
+
 void loop()
 {
-  stopFTS();
+  stopAtLongBlackBar();
+  deccelerateAtBlackBarLeft();
+  accelerateAtBlackBarRight();
 
   if (digitalRead(BUTTON) == LOW)
   {
     fts_button_break = !fts_button_break;
   }
 
-  Qtrrc.readCalibrated(sensors2);
-  // for (int i = 0; i < 8; i++)
-  // {
-  //   Serial.print(i);
-  //   Serial.print("-");
-  //   Serial.print("Sensor: ");
-  //   Serial.print(sensors2[i]);
-  //   Serial.println("");
-  // }
+  Qtrrc.readCalibrated(blackBarSnsrs);
 
   if (!fts_button_break)
   {
@@ -165,9 +176,9 @@ void loop()
       set_motors(-1001, -1001);
       delay(100);
       set_motors(0, 0);
-      delay(5000);
+      delay(waitAtBlackBarTime);
       goFTS();
-      getOutOfBlackZone(500);
+      getOutOfBlackZone(getOutOfBlackZoneTime);
     }
   }
   else
@@ -176,17 +187,19 @@ void loop()
   }
 }
 
+// ----------------------- Set Motors -------------------------------------------------------- //
+
 void set_motors(int motorspeed_l, int motorspeed_r)
 {
   // Anpassung der Geschwindigkeiten, falls sie einen Maximal- bzw. Minimalwert über(unter)schreiten
 
-  if (motorspeed_l > L_MAXSPEED)
+  if (motorspeed_l > l_maxspeed)
   {
-    motorspeed_l = L_MAXSPEED;
+    motorspeed_l = l_maxspeed;
   }
-  if (motorspeed_r > R_MAXSPEED)
+  if (motorspeed_r > r_maxspeed)
   {
-    motorspeed_r = R_MAXSPEED;
+    motorspeed_r = r_maxspeed;
   }
   if (motorspeed_l < -1000)
   {
@@ -217,11 +230,13 @@ void set_motors(int motorspeed_l, int motorspeed_r)
   analogWrite(PWM_RIGHT, motorspeed_r);
 }
 
-void stopFTS()
+// ----------------------- Stop and go at Black Bars -------------------------------------------------------- //
+
+void stopAtLongBlackBar()
 {
-  Qtrrc.readCalibrated(sensors2);
+  Qtrrc.readCalibrated(blackBarSnsrs);
   Serial.println(sensors[0]);
-  if (sensors2[1] >= 900 && sensors2[2] >= 900 && sensors2[3] >= 900 && sensors2[4] >= 900 && sensors2[5] >= 900 && sensors2[6] >= 900 && sensors2[7] >= 900)
+  if (blackBarSnsrs[0] >= 900 && blackBarSnsrs[1] >= 900 && blackBarSnsrs[2] >= 900 && blackBarSnsrs[3] >= 900 && blackBarSnsrs[4] >= 900 && blackBarSnsrs[5] >= 900 && blackBarSnsrs[6] >= 900 && blackBarSnsrs[7] >= 900)
   {
     Serial.print("Hi");
     fts_go = false;
@@ -233,7 +248,7 @@ void goFTS()
   fts_go = true;
 }
 
-void getOutOfBlackZone(int waitTime)
+void getOutOfBlackZone(int waitTime) //exists to stop FTS from stopping immediately again after starting
 {
   last_millis = millis();
   while (millis() <= last_millis + waitTime)
@@ -241,6 +256,23 @@ void getOutOfBlackZone(int waitTime)
     set_motors(100, 100);
   }
 }
+
+void deccelerateAtBlackBarLeft(){ //Sensor nr. 4 is not listed because it is not jet clear if it will read 0 or 1000
+    if (blackBarSnsrs[0] >= 900 && blackBarSnsrs[1] >= 900 && blackBarSnsrs[2] >= 900 && blackBarSnsrs[3] >= 900 && blackBarSnsrs[5] <= 20 && blackBarSnsrs[6] <= 20 && blackBarSnsrs[7] <= 20){
+      l_maxspeed = L_DECELERATED;
+      r_maxspeed = R_DECELERATED;
+    }
+}
+
+void accelerateAtBlackBarRight(){ //Sensor nr. 3 is not listed because it is not jet clear if it will read 0 or 1000
+    if (blackBarSnsrs[0] <= 20 && blackBarSnsrs[1] <= 20 && blackBarSnsrs[2] <= 20 && blackBarSnsrs[4] >= 900 && blackBarSnsrs[5] >= 900 && blackBarSnsrs[6] >= 900 && blackBarSnsrs[7] >= 900){
+      l_maxspeed = L_MAXSPEED;
+      r_maxspeed = L_MINSPEED;
+    }
+}
+
+
+// ----------------------- Calibration and saving of values -------------------------------------------------------- //
 
 void autoCalibration(int duration_cycles, bool enable_motors) //this function makes the FTS spin in circles, in that process it will calibrate automatically
 {
@@ -301,7 +333,8 @@ void initializeCalibrationArrays()
   Qtrrc.calibrate(QTR_EMITTERS_ON);
 }
 
-//only used while debugging
+// ----------------------- Debugging -------------------------------------------------------- //
+
 void test_motors()
 {
   //move forward
