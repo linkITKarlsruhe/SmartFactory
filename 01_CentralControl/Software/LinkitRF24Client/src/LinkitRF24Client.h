@@ -4,31 +4,35 @@
 
 #include <SPI.h>
 #include <RF24.h>
+#include <RF24Ethernet.h>
 #include <RF24Network.h>
 #include <RF24Mesh.h>
-#include <RF24Ethernet.h>
 #include <PubSubClient.h>
 
 class LinkitRF24Client{
 
-  RF24 radio;
-  RF24Network network;
-  RF24Mesh mesh;
-  RF24EthernetClass RF24Ethernet;
-  IPAddress ip;
-  IPAddress gateway; //Specify the gateway in case different from the server
-  IPAddress server;
+private:
+  RF24 radio = RF24(7,8);
+  RF24Network network = RF24Network(radio);
+  RF24Mesh mesh = RF24Mesh(radio,network);
+  RF24EthernetClass RF24Ethernet = RF24EthernetClass(radio,network,mesh);
+
+  IPAddress ip = IPAddress(10,10,2,8);
+  IPAddress gateway= IPAddress(10,10,2,2); //Specify the gateway in case different from the server
+  IPAddress server= IPAddress(10,10,2,2);
+
   EthernetClient ethClient;
-  PubSubClient client;
+  PubSubClient client = PubSubClient(ethClient);
   char *clientID = {"arduinoClient"};
+
 public:
   LinkitRF24Client();
-  PubSubClient getPubSubClient(){return client;};
-  bool isConnected(){return client.connected();};
-  void startClientLoop(){client.loop();};
+  PubSubClient getPubSubClient();
+  bool isConnected();
+  void startClientLoop();
   void reconnectClient();
-  bool checkConnection(){return mesh.checkConnection();};
-  void renewMeshAddress(){mesh.renewAddress();};
+  bool checkConnection();
+  void renewMeshAddress();
 };
 
 
