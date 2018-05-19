@@ -1,7 +1,7 @@
 # coding:utf-8
 
 from flask import render_template, jsonify, request
-from Db_operation import app, db
+from Db_operation import app, db, FTS
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -14,7 +14,9 @@ def test_base():
 @app.route('/table', methods=['GET', 'POST'])
 def show_table():
     if request.method == 'POST':
-        return jsonify(render_template("table.html"))
+        column_names = FTS.get_column_names()
+        data_rows = FTS.query.limit(1000).all()
+        return jsonify(render_template("table.html", **locals()))
     return jsonify("busy")
 
 

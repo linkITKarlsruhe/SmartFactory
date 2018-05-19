@@ -62,6 +62,10 @@ class FTS(db.Model):
                        'is_driving': self.is_driving, 'door_status': self.door_status,
                        'battery_status': self.battery_status}
 
+    @staticmethod
+    def get_column_names():
+        return FTS.metadata.tables[FTS.__tablename__].c.keys()
+
 
 if __name__ == "__main__":
     db.create_all()
@@ -75,4 +79,4 @@ if __name__ == "__main__":
     test_data = FTS(**data)
     db.session.add(test_data)
     db.session.commit()
-    print(FTS.query.all()[0])
+    print(FTS.get_column_names())
