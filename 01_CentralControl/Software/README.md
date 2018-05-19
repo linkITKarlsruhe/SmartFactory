@@ -16,3 +16,11 @@ Frontend:
 + Bootstrap
 + Highcharts, draw charts with data
 + DataTables, display raw data
+
+Data Persistence:
+
++ Flask_SQLALCHEMY
+
+Database:
+
++ SQLite3
