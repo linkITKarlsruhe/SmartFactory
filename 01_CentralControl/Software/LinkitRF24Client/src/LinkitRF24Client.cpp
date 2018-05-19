@@ -1,18 +1,23 @@
 #include "LinkitRF24Client.h"
-
+#include <SPI.h>
+#include <RF24.h>
+#include <RF24Network.h>
+#include <RF24Mesh.h>
+#include <RF24Ethernet.h>
+#include <PubSubClient.h>
 LinkitRF24Client::LinkitRF24Client(){
 
-  radio = RF24(7,8);
-  network = RF24Network(radio);
-  mesh = RF24Mesh(radio,network);
-  RF24Ethernet = RF24EthernetClass(radio,network,mesh);
-
-  ip = IPAddress(10,10,2,8);
-  gateway = IPAddress(10,10,2,2); //Specify the gateway in case different from the server
-  server = IPAddress(10,10,2,2);
-
-  EthernetClient ethClient;
-  PubSubClient client(ethClient);
+  // RF24 radio(7,8);
+  // RF24Network network(radio);
+  // RF24Mesh mesh(radio,network);
+  // RF24EthernetClass RF24Ethernet(radio,network,mesh);
+  //
+  // IPAddress ip(10,10,2,8);
+  // IPAddress gateway(10,10,2,2); //Specify the gateway in case different from the server
+  // IPAddress server(10,10,2,2);
+  //
+  // EthernetClient ethClient;
+  // PubSubClient client(ethClient);
 
   client.setServer(server, 1883);
   //client.setCallback(callback);
@@ -49,3 +54,9 @@ void LinkitRF24Client::reconnectClient() {
     }
   }
 }
+
+PubSubClient LinkitRF24Client::getPubSubClient(){return client;}
+bool LinkitRF24Client::isConnected(){return client.connected();}
+void LinkitRF24Client::startClientLoop(){client.loop();}
+bool LinkitRF24Client::checkConnection(){return mesh.checkConnection();}
+void LinkitRF24Client::renewMeshAddress(){mesh.renewAddress();}
