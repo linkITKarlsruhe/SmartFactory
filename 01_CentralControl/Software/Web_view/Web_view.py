@@ -32,8 +32,6 @@ def show_chart():
 
 if __name__ == '__main__':
     db.create_all()
-    # db.session.add(Num(number=1))
-    # db.session.commit()
     app.run(port=8080, debug=True)
 
 

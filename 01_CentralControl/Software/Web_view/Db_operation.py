@@ -2,6 +2,7 @@
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/peiren/test.db'
@@ -19,6 +20,7 @@ class User(db.Model):
 
 class FTS(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    time_stamp = db.Column(db.TIMESTAMP)
     sensor1 = db.Column(db.Integer, db.CheckConstraint('sensor1 BETWEEN 0 and 1000'))
     sensor2 = db.Column(db.Integer, db.CheckConstraint('sensor2 BETWEEN 0 and 1000'))
     sensor3 = db.Column(db.Integer, db.CheckConstraint('sensor3 BETWEEN 0 and 1000'))
@@ -50,7 +52,8 @@ class FTS(db.Model):
                                nullable=False)
 
     def __repr__(self):
-        return '%r' % {'sensor1': self.sensor1, 'sensor2': self.sensor2, 'sensor3': self.sensor3,
+        return '%r' % {'time_stamp': self.time_stamp,
+                       'sensor1': self.sensor1, 'sensor2': self.sensor2, 'sensor3': self.sensor3,
                        'sensor4': self.sensor4, 'sensor5': self.sensor5, 'sensor6': self.sensor6,
                        'sensor7': self.sensor7, 'sensor8': self.sensor8,
                        'calibration1': self.calibration1, 'calibration2': self.calibration2,
@@ -69,7 +72,8 @@ class FTS(db.Model):
 
 if __name__ == "__main__":
     db.create_all()
-    data = {'sensor1': 200, 'sensor2': 100, 'sensor3': 200, 'sensor4': 243,
+    data = {'time_stamp': datetime.datetime.now(),
+            'sensor1': 200, 'sensor2': 100, 'sensor3': 200, 'sensor4': 243,
             'sensor5': 500, 'sensor6': 800, 'sensor7': 999, 'sensor8': 900,
             'calibration1': 2100, 'calibration2': 1000, 'calibration3': 2020,
             'calibration4': 2300, 'calibration5': 200, 'calibration6': 2000,
