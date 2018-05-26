@@ -1,0 +1,46 @@
+{
+    "description": "Open TCP/IP wireless/radio IoT mesh networks for Arduino", 
+    "repository": {
+        "url": "https://github.com/TMRh20/RF24Ethernet", 
+        "type": "git"
+    }, 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam", 
+        "espressif8266", 
+        "intel_arc32", 
+        "microchippic32", 
+        "nordicnrf51", 
+        "teensy", 
+        "timsp430"
+    ], 
+    "export": {
+        "exclude": [
+            "extras", 
+            "docs", 
+            "tests", 
+            "test", 
+            "*.doxyfile", 
+            "*.pdf"
+        ], 
+        "include": null
+    }, 
+    "authors": [
+        {
+            "maintainer": true, 
+            "name": "TMRh20", 
+            "url": null, 
+            "email": null
+        }
+    ], 
+    "keywords": [
+        "communication"
+    ], 
+    "id": 908, 
+    "name": "RF24Ethernet", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "version": "1.6.1", 
+    "homepage": "http://tmrh20.github.io/RF24Ethernet/"
+}
