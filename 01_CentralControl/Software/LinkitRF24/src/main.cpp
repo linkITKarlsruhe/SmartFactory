@@ -31,13 +31,17 @@
 #include <RF24Network.h>
 #include <RF24Ethernet.h>
 #include <RF24Mesh.h>
+#include <Time.h>
+#include <time.h>
+#include <string.h>
+//#include <DateTimeStrings.h>
 // LinkitRF24Client *linkit_client = new LinkitRF24Client();
 RF24 radio(7,8);
 RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 RF24EthernetClass RF24Ethernet(radio,network,mesh);
 
-IPAddress ip(10,10,2,8);
+IPAddress ip(10,10,2,9);
 IPAddress gateway(10,10,2,2); //Specify the gateway in case different from the server
 IPAddress server(10,10,2,2);
 
@@ -81,7 +85,10 @@ uint32_t mesh_timer = 0;
 void loop()
 {
   if(millis()-mesh_timer > 5000){ //Every 30 seconds, test mesh connectivity
-    Serial.println("Loop");
+    time_t n = now();
+    char buff[20];
+    strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&n));
+    client.publish("smartfactory/fts","$TIMESTAMP#200#100#…");
     mesh_timer = millis();
     if( ! mesh.checkConnection() ){
         mesh.renewAddress();
