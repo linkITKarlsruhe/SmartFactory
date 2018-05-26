@@ -4,9 +4,9 @@
 [TOC]
 
 ---
-##LinkitRF24 vs. LinkitRF24Client
+## LinkitRF24 vs. LinkitRF24Client
 
-LinkitRF24 is just a simple code from [here](http://tmrh20.github.io/RF24Ethernet/mqtt_basic_8ino-example.html) without any encapsulation. And LinkitRF24Client tries to reach encapsulation. This was tried with Atom-PlattformIDE. The current error given by Litner-Build is located at error\build\_linkitRF24Client.txt.
+LinkitRF24 is just a simple code from [here](http://tmrh20.github.io/RF24Ethernet/mqtt_basic_8ino-example.html) without any encapsulation. And LinkitRF24Client tries to reach encapsulation. This was tried with Atom-PlattformIDE. The current error given by Litner-Build is located at [error\_build\_linkitRF24Client.txt](https://github.com/yangpeiren/SmartFactory/blob/master/01_CentralControl/Software/LinkitRF24Client/errors_build_linkitRF24client.txt).
 
 
 ## starup_mailer.py
