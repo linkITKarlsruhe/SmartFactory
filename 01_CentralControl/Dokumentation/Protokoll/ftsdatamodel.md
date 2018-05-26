@@ -1,9 +1,10 @@
-+ Sensorwert 8*[0,1000] interger (8 Sensoren)
++ Sensorwert 8*[0,1000] integer (8 Sensoren)
 + PulsWeitenMOdulation 2*[0,255] integer (Für Jede Seite+)
-+ Fährt oder nicht fährt {0,1}
-+ Wert für die Falltür
++ Fährt oder nicht fährt {0,1} modelled as boolean valiable, True = is moving, False = stopped
++ Wert für die Falltür, Bool, True = Closed, False = Open
 
 ---
-+ Kalibrierung
-+ Akkuladestand (aktuell nicht)
+
++ Kalibrierung, 8*[0,2500] integer
++ Akkuladestand (aktuell nicht), integer, [0,100]
 
