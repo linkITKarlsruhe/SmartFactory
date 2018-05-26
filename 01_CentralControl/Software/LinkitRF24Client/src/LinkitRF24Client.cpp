@@ -5,8 +5,8 @@
 #include <RF24Mesh.h>
 #include <RF24Ethernet.h>
 #include <PubSubClient.h>
-LinkitRF24Client::LinkitRF24Client(){
-
+// LinkitRF24Client::LinkitRF24Client(){
+//
   // RF24 radio(7,8);
   // RF24Network network(radio);
   // RF24Mesh mesh(radio,network);
@@ -19,20 +19,20 @@ LinkitRF24Client::LinkitRF24Client(){
   // EthernetClient ethClient;
   // PubSubClient client(ethClient);
 
-  client.setServer(server, 1883);
-  //client.setCallback(callback);
-  Serial.println("Before Start");
-
-  Ethernet.begin(ip);
-  Ethernet.set_gateway(gateway);
-  Serial.println("Before Mesh");
-  if (mesh.begin()) {
-    Serial.println(" OK");
-  } else {
-    Serial.println(" Failed");
-  }
-  clientID[13] = ip[3] + 48; //Convert last octet of IP to ascii & use in clientID
-}
+//   client.setServer(server, 1883);
+//   client.setCallback(callback);
+//   Serial.println("Before Start");
+//
+//   Ethernet.begin(ip);
+//   Ethernet.set_gateway(gateway);
+//   Serial.println("Before Mesh");
+//   if (mesh.begin()) {
+//     Serial.println(" OK");
+//   } else {
+//     Serial.println(" Failed");
+//   }
+//   clientID[13] = ip[3] + 48; //Convert last octet of IP to ascii & use in clientID
+// }
 
 void LinkitRF24Client::reconnectClient() {
   // Loop until we're reconnected
