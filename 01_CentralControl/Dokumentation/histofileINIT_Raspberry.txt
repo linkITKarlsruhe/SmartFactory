@@ -67,13 +67,7 @@ cd /home/pi/SmartFactory/01_CentralControl/Software/
 sudo chmod +x startup_mailer.py 
 ./startup_mailer.py 
 sudo crontab -l
-sudo reboot
-ps
-ps -l
-ps -al
-exit
 pip install flask
-$HISTFILE
 ls
 cd SmartFactory/01_CentralControl/Software/Web_view/
 ls
