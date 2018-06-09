@@ -3,11 +3,13 @@
         {
             "name": "Win32",
             "includePath": [
+                "D:\\my\\GitHub\\SmartFactory\\01_ATV\\Software\\ATVcode\\libraries\\TimedAction",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": false,
                 "path": [
+                    "D:\\my\\GitHub\\SmartFactory\\01_ATV\\Software\\ATVcode\\libraries\\TimedAction",
                     "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino"
                 ]
             },

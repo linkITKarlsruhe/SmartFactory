@@ -4,30 +4,38 @@ const int TIMEOUT = 2500;
 unsigned char usedDiodes[8] = {A7, A6, A5, A4, A3, A2, A1, A0};
 QTRSensorsRC Qtrrc(usedDiodes, NUM_SENSORS, TIMEOUT); //TODO: Add to lib instantiate object of class QTRSensorsRC; sensors nubered from left to right; A1 Sensor num 0
 
+// int TRIG_PIN = 11; // Arduino Pin an HC-SR04 Trig
+// int ECHO_PIN = 12; // Arduino Pin an HC-SR04 Echo
+// int ECHO_INT = 0;
+
+// HC_SR04 sensor(TRIG_PIN, ECHO_PIN, ECHO_INT);
+// SoftwareSerial linkITUltraSonic(10, 11); //Using pins 11,12
+
 FTSlib::FTSlib(int pinarray[5])
 {
-  pinMode(BUTTON, INPUT_PULLUP);
   IN1 = pinarray[0];
   IN2 = pinarray[1];
   IN3 = pinarray[2];
   IN4 = pinarray[3];
   BUTTON = pinarray[4];
+  pinMode(BUTTON, INPUT_PULLUP);
 
   Qtrrc.readCalibrated(blackBarSnsrs);
 
-  L_DECELERATED = 0;
-  L_MAXSPEED = 0;
-  L_MINSPEED = 255;
-  R_DECELERATED = 255;
-  R_MAXSPEED = 80;
-  R_MINSPEED = 80;
+  L_DECELERATED = 90;
+  L_MAXSPEED = 255;
+  L_MINSPEED = 0;
+  R_DECELERATED = 90;
+  R_MAXSPEED = 255;
+  R_MINSPEED = 0;
   MAX_BRAKE = 255;
 }
 
 void FTSlib::accelerateAtBlackBarRight()
 {
   //Sensor nr. 3 is not listed because it is not jet clear if it will read 0 or 1000
-  if (blackBarSnsrs[0] >= 900 && blackBarSnsrs[1] >= 900 && blackBarSnsrs[2] >= 900 && blackBarSnsrs[3] >= 900 && blackBarSnsrs[5] <= 100 && blackBarSnsrs[6] <= 100 && blackBarSnsrs[7] <= 100)
+  // && blackBarSnsrs[1] >= 900 && blackBarSnsrs[2] >= 900 && blackBarSnsrs[3] >= 900 &&
+  if (blackBarSnsrs[0] >= 900 && blackBarSnsrs[5] <= 100 && blackBarSnsrs[6] <= 100 && blackBarSnsrs[7] <= 100)
 
   {
     l_maxspeed = 255;
@@ -127,15 +135,32 @@ void FTSlib::checkButtonpress()
   }
 }
 
+void FTSlib::hitbreak()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(PWM_LEFT, MAX_BRAKE);
+  analogWrite(PWM_RIGHT, MAX_BRAKE);
+  delay(50);
+  setMotors(0, 0);
+}
+
 void FTSlib::decelerateAtBlackBarLeft()
 {
   //Sensor nr. 4 is not listed because it is not jet clear if it will read 0 or 1000
-
-  if (blackBarSnsrs[0] <= 100 && blackBarSnsrs[1] <= 100 && blackBarSnsrs[2] <= 100 && blackBarSnsrs[4] >= 900 && blackBarSnsrs[5] >= 900 && blackBarSnsrs[6] >= 900 && blackBarSnsrs[7] >= 900)
+  //blackBarSnsrs[4] >= 900 && blackBarSnsrs[5] >= 900 && blackBarSnsrs[6] >= 900 &&
+  if (blackBarSnsrs[0] <= 100 && blackBarSnsrs[1] <= 100 && blackBarSnsrs[2] <= 100 && blackBarSnsrs[7] >= 900)
   {
-    l_maxspeed = L_DECELERATED;
-    r_maxspeed = R_DECELERATED;
-    Serial.println("decc");
+    setMotors(r_maxspeed, l_maxspeed);
+    delay(100);
+    if (!(blackBarSnsrs[0] <= 100 && blackBarSnsrs[1] <= 100 && blackBarSnsrs[2] <= 100 && blackBarSnsrs[4] <= 100 && blackBarSnsrs[5] <= 100 && blackBarSnsrs[6] <= 100 && blackBarSnsrs[7] <= 100))
+    {
+      l_maxspeed = L_DECELERATED;
+      r_maxspeed = R_DECELERATED;
+      Serial.println("decc");
+    }
   }
 }
 
@@ -231,9 +256,6 @@ void FTSlib::initializeCalibrationArrays()
 void FTSlib::setMotors(int motorspeed_l, int motorspeed_r)
 {
   // Anpassung der Geschwindigkeiten, falls sie einen Maximal- bzw. Minimalwert über(unter)schreiten
-  Serial.println("setMotors");
-  Serial.println(motorspeed_l);
-  Serial.println(IN1);
 
   if (motorspeed_l > l_maxspeed)
   {
@@ -257,10 +279,10 @@ void FTSlib::setMotors(int motorspeed_l, int motorspeed_r)
 
   if (motorspeed_r < -1000)
   {
-    motorspeed_r = map(motorspeed_r, -(NUM_SENSORS - 1), -5000, 0, MAX_BRAKE);
     // Serial.print("Brake R: "); Serial.println(motorspeed_r);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
+    motorspeed_r = map(motorspeed_r, -(NUM_SENSORS - 1), -5000, 0, MAX_BRAKE);
   }
   else
   {

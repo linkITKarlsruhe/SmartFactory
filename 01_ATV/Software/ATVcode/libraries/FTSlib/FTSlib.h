@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <EEPROM.h> // lib for memory for saving calibration
 #include <QTRSensors.h>
+#include <SoftwareSerial.h>
 
 class FTSlib
 {
@@ -19,11 +20,14 @@ public:
   void stopAtLongBlackBar();
   void updateDirection();
   void setMotors(int motorspeed_l, int motorspeed_r);
+  // void entfernungGD();
+  void hitbreak();
+  bool fts_button_break = true;
 
 private:
   //functions
-  int eepromRead(int address);
   void autoCalibration(int duration_cycles, bool enable_motors);
+  int eepromRead(int address);
   void eepromWrite(int address, int value);
   void getOutOfBlackZone(int waitTime);
   void goFTS();
@@ -32,8 +36,8 @@ private:
 
   //variables
   //PID control
-  int KP;
-  int KD;
+  int KP = 1;
+  int KD = 5;
   //pins
   int IN1;
   int IN2;
@@ -44,22 +48,23 @@ private:
   const int PWM_LEFT = 3;
   const int PWM_RIGHT = 8;
   //speed
-  int L_DECELERATED;
-  int L_MAXSPEED;
-  int L_MINSPEED;
-  int R_DECELERATED;
-  int R_MAXSPEED;
-  int R_MINSPEED;
-  int MAX_BRAKE;
-  //sensors
+  int L_DECELERATED = 80;
+  int L_MAXSPEED = 255;
+  int L_MINSPEED = 0;
+  int R_DECELERATED = 80;
+  int R_MAXSPEED = 255;
+  int R_MINSPEED = 0;
+  int MAX_BRAKE = 255;
+  //Infrarot sensors
   unsigned int blackBarSnsrs[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // probably not really necessary, used for finding black markings on the underground
   int calibration_values[8] = {708, 864, 812, 836, 784};
-
+  //ultra sonic sensors
+  long duration;
+  int distance;
   //misc
-  bool fts_button_break;
   bool fts_go = true;
   long getOutOfBlackZoneTime = 500;
-  long startup_delay = 4000;
+  long startup_delay = 5000;
   long waitAtBlackBarTime = 5000;
   int l_maxspeed = L_MAXSPEED;
   int r_maxspeed = R_MAXSPEED;
@@ -79,6 +84,7 @@ private:
 };
 
 class EEPROM;
+class SoftwareSerial;
 class QTRSensors;
 
 #endif
