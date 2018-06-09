@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/peiren/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/pi/smart_factory_sqlite/test.db'
 db = SQLAlchemy(app)
 
 

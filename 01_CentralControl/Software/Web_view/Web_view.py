@@ -2,6 +2,7 @@
 
 from flask import render_template, jsonify, request
 from Db_operation import app, db, FTS
+import socket
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -31,8 +32,11 @@ def show_chart():
 
 
 if __name__ == '__main__':
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("1.1.1.1", 80))
+    ipaddr = s.getsockname()[0]
     db.create_all()
-    app.run(port=8080, debug=True)
+    app.run(host=ipaddr, port=8080, debug=True)
 
 
 
