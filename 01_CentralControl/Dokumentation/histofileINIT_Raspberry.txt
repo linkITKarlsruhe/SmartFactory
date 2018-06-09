@@ -1,0 +1,109 @@
+which python
+which python3
+python3 --version
+sudo apt-get install rdesktop
+git --version
+sudo apt-get install mosquitto
+mkdir RF24libs
+cd RF24libs/
+https://github.com/nRF24/RF24.git
+git clone https://github.com/nRF24/RF24.git
+git clone https://github.com/nRF24/RF24Network.git
+git clone https://github.com/nRF24/RF24Mesh.git
+git clone https://github.com/nRF24/RF24Gteway.git
+git clone https://github.com/nRF24/RF24Gateway.git
+cd RF24
+make install
+sudo make 
+sudo make install
+cd ../RF24Network/
+sudo make 
+sudo make install
+git clone https://github.com/nRF24/RF24Ethernet.git
+rm -r RF24Ethernet/
+sudo rm -r RF24Ethernet/
+cd..
+git clone https://github.com/nRF24/RF24Ethernet.git
+sudo rm -r RF24Ethernet/
+cd ..
+git clone https://github.com/nRF24/RF24Ethernet.git
+cd RF24Ethernet/
+sudo make 
+sudo make install
+ls
+cd ../RF24Me
+cd ../RF24Mesh
+sudo make 
+sudo make install
+cd ../RF24Gateway/
+sudo make 
+cd ../RF24Gateway/
+sudo make install
+cd ..
+ld
+ls
+cd RF24Gateway/examples/
+ls
+make
+./RF24GatewayNode 
+sudo ./RF24GatewayNode 
+sudo apt-get install xrdp
+chpasswd pi
+chpasswd --help
+chgpasswd --help
+passwd pi
+sudo passwd pi
+ls
+git clone https://github.com/linkITKarlsruhe/SmartFactory.git
+cd SmartFactory/01_CentralControl/Software/
+ls
+sudo crontab -l
+sudo crontab
+sudo crontab --help
+sudo crontab -e
+sudo reboot
+sudo ./RF24libs/RF24Gateway/examples/RF24GatewayNode 
+cd /home/pi/SmartFactory/01_CentralControl/Software/
+sudo chmod +x startup_mailer.py 
+./startup_mailer.py 
+sudo crontab -l
+sudo reboot
+ps
+ps -l
+ps -al
+exit
+pip install flask
+$HISTFILE
+ls
+cd SmartFactory/01_CentralControl/Software/Web_view/
+ls
+python Web_view.py 
+pip install flask_sqlalchemy
+python Web_view.py 
+mkdir smart_factory_sqlite
+sudo ./RF24libs/RF24Gateway/examples/RF24GatewayNode 
+cd SmartFactory/
+git status
+git remote set-url https://github.com/yangpeiren/SmartFactory
+git remote set-url --push https://github.com/yangpeiren/SmartFactory
+git remote set-url --push SmartFactory https://github.com/yangpeiren/SmartFactory
+git remote set-url --push origin/master https://github.com/yangpeiren/SmartFactory
+git remote set-url --push origin https://github.com/yangpeiren/SmartFactory
+git push
+git commit -am "adapted ip address to raspberry pi"
+git config --global user.email yangpeiren@163.com
+git config --global user.name Peiren Yang
+git commit -am "adapted ip address to raspberry pi"
+git push
+git pll
+git pull
+git push
+git remote set-url --pull origin https://github.com/yangpeiren/SmartFactory
+git remote set-url upstream https://github.com/yangpeiren/SmartFactory
+git remote -v
+git remote set-url  https://github.com/yangpeiren/SmartFactory
+git remote set-url origin https://github.com/yangpeiren/SmartFactory
+git remte -v
+git remote -v
+git pull
+git push
