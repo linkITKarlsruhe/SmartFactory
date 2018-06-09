@@ -2,5 +2,5 @@
     "board": "arduino:avr:mega",
     "configuration": "cpu=atmega2560",
     "port": "COM3",
-    "sketch": "01_ATV\\Software\\ATVcode\\main\\main.ino"
+    "sketch": "main\\main.ino"
 }
