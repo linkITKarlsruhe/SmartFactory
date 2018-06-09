@@ -31,13 +31,17 @@
 #include <RF24Network.h>
 #include <RF24Ethernet.h>
 #include <RF24Mesh.h>
+#include <Time.h>
+#include <time.h>
+#include <string.h>
+//#include <DateTimeStrings.h>
 // LinkitRF24Client *linkit_client = new LinkitRF24Client();
 RF24 radio(7,8);
 RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 RF24EthernetClass RF24Ethernet(radio,network,mesh);
 
-IPAddress ip(10,10,2,8);
+IPAddress ip(10,10,2,9);
 IPAddress gateway(10,10,2,2); //Specify the gateway in case different from the server
 IPAddress server(10,10,2,2);
 
@@ -60,7 +64,6 @@ PubSubClient client(ethClient);
 void setup()
 {
   Serial.begin(115200);
-
   client.setServer(server, 1883);
   client.setCallback(callback);
   Serial.println("Before Start");
@@ -68,11 +71,17 @@ void setup()
   Ethernet.begin(ip);
   Ethernet.set_gateway(gateway);
   Serial.println("Before Mesh");
-  if (mesh.begin()) {
+  bool beginsuc = false;
+while(!beginsuc){
+  if (mesh.begin(97)) {
    Serial.println(" OK");
+   beginsuc = true;
   } else {
    Serial.println(" Failed");
   }
+  delay(100);
+
+}
   clientID[13] = ip[3] + 48; //Convert last octet of IP to ascii & use in clientID
 }
 
@@ -80,8 +89,12 @@ uint32_t mesh_timer = 0;
 
 void loop()
 {
-  if(millis()-mesh_timer > 5000){ //Every 30 seconds, test mesh connectivity
-    Serial.println("Loop");
+  if(millis()-mesh_timer > 2000 && client.connected()){ //Every 30 seconds, test mesh connectivity
+    //time_t n = now();
+    // char buff[20];
+    // strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&n));
+    client.publish("smartfactory/fts","1214124214#12#123#333#111#444#111#444#999#2000#2000#2000#2000#2000#2000#2000#2000#0#124#1#0#75");
+    Serial.println("Send msg");
     mesh_timer = millis();
     if( ! mesh.checkConnection() ){
         mesh.renewAddress();
@@ -93,14 +106,14 @@ void loop()
     if (client.connect(clientID)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic","hello world");
+      client.publish("smartfactory/fts","hello world");
       // ... and resubscribe
       client.subscribe("inTopic");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
-      Serial.println(" try again in 2 seconds");
-      // Wait 5 seconds before retrying
+      Serial.println(" try in in 2 seconds");
+      // Wait 2 seconds before retrying
       delay(2000);
     }
   }
