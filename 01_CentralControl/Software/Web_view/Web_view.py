@@ -37,7 +37,3 @@ if __name__ == '__main__':
     ipaddr = s.getsockname()[0]
     db.create_all()
     app.run(host=ipaddr, port=8080, debug=True)
-
-
-
-
