@@ -2,8 +2,8 @@
  *************************************************************************
    RF24Ethernet Arduino library by TMRh20 - 2014-2015
    Automated (mesh) wireless networking and TCP/IP communication stack for RF24 radio modules
-   RF24 -> RF24Network -> UIP(TCP/IP) -> RF24Ethernet
-                       -> RF24Mesh
+   RF24 . RF24Network . UIP(TCP/IP) . RF24Ethernet
+                       . RF24Mesh
         Documentation: http://tmrh20.github.io/RF24Ethernet/
  *************************************************************************
  *
@@ -24,26 +24,12 @@
 
 */
 
-// #include "LinkitRF24Client.h"
 #include <LinkitRF24.h>
-// #include <PubSubClient.h>
-// #include <SPI.h>
-// #include <RF24.h>
-// #include <RF24Network.h>
-// #include <RF24Ethernet.h>
-// #include <RF24Mesh.h>
 #include <Time.h>
 #include <time.h>
 #include <string.h>
 //#include <DateTimeStrings.h>
-LinkitRF24 *linkit_client = new LinkitRF24();
-// RF24 radio(7,8);
-// RF24Network network(radio);
-// RF24Mesh mesh(radio,network);
-// RF24EthernetClass RF24Ethernet(radio,network,mesh);
-
-// IPAddress gateway(10,10,2,2); //Specify the gateway in case different from the server
-// IPAddress server(10,10,2,2);
+LinkitRF24 linkit_client;
 
 char *clientID = {"arduinoClient"};
 
@@ -57,38 +43,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
-// EthernetClient ethClient;
-// PubSubClient client(ethClient);
-
-
 void setup()
 {
-//   Serial.begin(115200);
-//   client.setServer(server, 1883);
-//   client.setCallback(callback);
-//   Serial.println("Before Start");
-//
-//   Ethernet.begin(ip);
-//   Ethernet.set_gateway(gateway);
-//   Serial.println("Before Mesh");
-//   bool beginsuc = false;
-linkit_client->setup(callback,clientID);
-while(!linkit_client->meshBegins()){
+Serial.begin(115200);
+Serial.println("Before linkit setup");
+linkit_client.setup(callback,clientID);
+Serial.println("After linkit setup");
+
+while(!linkit_client.meshBegins()){
   delay(100);
-     Serial.println(" Failed");
+  Serial.println("Failed");
 }
-   Serial.println(" OK");
-// while(!beginsuc){
-//   if (mesh.begin(97)) {
-//    Serial.println(" OK");
-//    beginsuc = true;
-//   } else {
-//    Serial.println(" Failed");
-//   }
-//   delay(100);
-//
-// }
-//   clientID[13] = ip[3] + 48; //Convert last octet of IP to ascii & use in clientID
+   Serial.println("OK, Arduino-Setup done");
 }
 
 uint32_t mesh_timer = 0;
@@ -96,7 +62,7 @@ uint32_t mesh_timer = 0;
 void loop()
 {
 //   if(millis()-mesh_timer > 2000 && client.connected()){ //Every 30 seconds, test mesh connectivity
-if(linkit_client->mqttConnected()){}
+Serial.print("Arduino Loop");
 //     //time_t n = now();
 //     // char buff[20];
 //     // strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&n));
@@ -109,27 +75,27 @@ if(linkit_client->mqttConnected()){}
 //      }
 //   }
 //   if (!client.connected()) {
-if(!linkit_client->mqttConnected())
+if(!linkit_client.mqttConnected())
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     //if(client.connect(clientID))
-    if (linkit_client->connectMqtt()) {
+    if (linkit_client.connectMqtt()) {
       Serial.println("connected");
        // Once connected, publish an announcement...
 //       client.publish("smartfactory/fts","hello world");
-      linkit_client->publish("smartfactory/fts","hello world");
+      linkit_client.publish("smartfactory/fts","hello world");
        // ... and resubscribe
 //       client.subscribe("inTopic");
-      linkit_client->subscribe("inTopic");
+      linkit_client.subscribe("inTopic");
     } else {
       Serial.print("failed, rc=");
       // Serial.print(client.state());
-      Serial.print(linkit_client->clientState());
+      Serial.print(linkit_client.clientState());
       Serial.println(" try in in 2 seconds");
       // Wait 2 seconds before retrying
       delay(2000);
     }
 //   }
 // client.loop();
-linkit_client->clientLoop();
+linkit_client.clientLoop();
 }
