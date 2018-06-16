@@ -1,0 +1,1 @@
+QTR Reflectance Sensor Documentation:	https://www.pololu.com/docs/0J19/all#2
